@@ -82,8 +82,8 @@ int main()
     };
 
     vector<fs::path> cam = {
-        "cam_front_30",
-        "cam_side_right",
+        "cam_front_30_undistorted",
+        "cam_side_right_undistorted",
     };
 
     // Creating vector to store vectors of 3D points for each checkerboard image
@@ -106,6 +106,7 @@ int main()
 
     cv::Mat leftframe, rightframe;
     cv::Mat leftgray, rightgray;
+    cv::Size size_2k(2560, 1440);
 
     cv::namedWindow("Left", cv::WINDOW_NORMAL);
     cv::namedWindow("Right", cv::WINDOW_NORMAL);
@@ -125,6 +126,8 @@ int main()
             cout << "Right: " << right_files[i] << endl;
             leftframe = cv::imread(left_files[i]);
             rightframe = cv::imread(right_files[i]);
+            cv::resize(leftframe, leftframe, size_2k);
+            cv::resize(rightframe, rightframe, size_2k);
 
             cv::imshow("Left", leftframe);
             cv::imshow("Right", rightframe);
@@ -189,8 +192,6 @@ int main()
     readCameraParameters(right_matrix, right_cameraMatrix, right_distCoeffs);
 
     cv::Mat R, T, E, F;
-
-    cv::Size size_2k(2560, 1440);
 
     double rmsStereo = cv::stereoCalibrate(objpoints, leftpoints, rightpoints, 
                                             left_cameraMatrix, left_distCoeffs, 
