@@ -70,14 +70,31 @@ void readEXTParameters(const string& filename, cv::Mat& R, cv::Mat& T) {
 
 int main() 
 {
-    string left_camera_txt = "/home/fyh/data/GPcar/cam_front_30.txt";
-    string right_camera_txt = "/home/fyh/data/GPcar/cam_side_right.txt";
+    string left_camera_txt = "/home/fyh/data/GPcar/cam_front_30_undistorted.txt";
+    string right_camera_txt = "/home/fyh/data/GPcar/cam_side_right_undistorted.txt";
     string extrinsic_txt = "/home/fyh/data/GPcar/extrinsic.txt";
 
-    cv::Mat Kl, Kr, Dl, Dr, R_rl, T_rl;
-    readINTParameters(left_camera_txt, Kl, Dl);
-    readINTParameters(right_camera_txt, Kr, Dr);
-    readEXTParameters(extrinsic_txt, R_rl, T_rl);
+    // cv::Mat Kl, Kr, Dl, Dr, R_rl, T_rl;
+    // readINTParameters(left_camera_txt, Kl, Dl);
+    // readINTParameters(right_camera_txt, Kr, Dr);
+    // readEXTParameters(extrinsic_txt, R_rl, T_rl);
+    // cout << Dl << endl;
+    // cout << Dr << endl;
+
+    cv::Mat Kl = (cv::Mat_<double>(3, 3) << 5075.705706803091, -26.955546561137076, 1239.0383093198182,
+                                            0.0, 5076.262034300842, 578.6498015759931,
+                                            0.0, 0.0, 1.0);
+    cv::Mat Kr = (cv::Mat_<double>(3, 3) << 1394.4587015095824, 2.807374442696875, 1225.0312259198076,
+                                            0.0, 1476.288224276559, 689.4153922809646,
+                                            0.0, 0.0, 1.0);
+    cv::Mat Dl = (cv::Mat_<double>(1, 5) << -0.22704271021659853, 1.5258030740216681, -0.01046364192558752, 0.008777958202082443, -12.489737783059466);
+    cv::Mat Dr = (cv::Mat_<double>(1, 5) << 0.015340549897953791, -2.527123692514174, -0.005624479491394424, -0.007288253807626851, 28.062174734978758);
+    cv::Mat R_rl = (cv::Mat_<double>(3, 3) << 0.9997786881136527, 0.0046600553034099315, 0.020514840440834188,
+                                            -0.004538941509713027, 0.9999720192187217, -0.005946325722985069,
+                                            -0.02054197662629205, 0.0058518940695804515, 0.9997718652433081);
+    cv::Mat T_rl = (cv::Mat_<double>(3, 1) << -93.52047759791571, -1.7942793233303884, -9.658476868228188);
+    cout << Dl << endl;
+    cout << T_rl << endl;
 
     cv::Size size_2k(2560, 1440);
 
@@ -89,8 +106,8 @@ int main()
     };
 
     vector<fs::path> cam = {
-        "cam_front_30",
-        "cam_side_right",
+        "cam_front_30_undistorted",
+        "cam_side_right_undistorted",
     };
 
     cv::Mat leftframe, rightframe, origin;
@@ -99,6 +116,7 @@ int main()
     cv::namedWindow("Rectify", cv::WINDOW_NORMAL);
 
     const int IMG_P_FOLDER = 5;
+    double scale = 4.0;
 
     for (const auto& folder : folders) {
         fs::path left_folder = folder / cam[0];
@@ -127,7 +145,7 @@ int main()
             cv::Mat Rl, Rr, Pl, Pr, Q;
             cv::Mat undistmap1l, undistmap2l, undistmap1r, undistmap2r;
 
-            cv::stereoRectify(Kl, Dl, Kr, Dr, size_2k, R_rl, T_rl, Rl, Rr, Pl, Pr, Q, cv::CALIB_ZERO_DISPARITY, 0);
+            cv::stereoRectify(Kl, Dl, Kr, Dr, size_2k, R_rl, T_rl, Rl, Rr, Pl, Pr, Q, cv::CALIB_ZERO_DISPARITY);
             cout << "stereo rectify finished." << endl;
             cv::initUndistortRectifyMap(Kl, Dl, Rl, Pl, size_2k, CV_16SC2, undistmap1l, undistmap2l);
             cv::initUndistortRectifyMap(Kr, Dr, Rr, Pr, size_2k, CV_16SC2, undistmap1r, undistmap2r);
@@ -146,8 +164,8 @@ int main()
             cout << "Pr: " << endl << Pr << endl;
 
             cv::Mat lframe_rtf, rframe_rtf;
-            cv::remap(leftframe, lframe_rtf, undistmap1l, undistmap2l, cv::INTER_LINEAR);
-            cv::remap(rightframe, rframe_rtf, undistmap1r, undistmap2r, cv::INTER_LINEAR);
+            cv::remap(ltemp, lframe_rtf, undistmap1l, undistmap2l, cv::INTER_LINEAR);
+            cv::remap(rtemp, rframe_rtf, undistmap1r, undistmap2r, cv::INTER_LINEAR);
 
             cv::hconcat(ltemp, rtemp, origin);
             cv::Mat rectify;
