@@ -33,7 +33,7 @@ def markPcd(pcd_path, out_path):
     pts = [(point.coord[0], point.coord[1], point.coord[2]) for point in selected_points]
 
     def sort_pts(elem):
-        return elem[0], elem[2]
+        return - elem[1], - elem[2]
     
     pts = sorted(pts, key=sort_pts)
     
